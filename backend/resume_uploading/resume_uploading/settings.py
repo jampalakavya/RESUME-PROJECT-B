@@ -9,11 +9,20 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+print("BREVO KEY FROM SETTINGS:", BREVO_API_KEY)
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -25,7 +34,7 @@ SECRET_KEY = 'django-insecure-wdr633nfhvsdu6gtyp0)-*fxb&c7ohu_f8456(0d-2=cs_ry$w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.1.43','127.0.0.1']
 
 
 # Application definition
@@ -48,34 +57,40 @@ INSTALLED_APPS = [
    
 ]
 
-
+SITE_ID = 1
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATIC_URL = 'static/'
 LOGIN_REDIRECT_URL = "http://localhost:5173/"
 LOGOUT_REDIRECT_URL = "/"
 
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+SOCIALACCOUNT_QUERY_EMAIL = True
 
+# Google OAuth Configuration
+import os
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '1010396436283-gjnrp2m8gk77j53bc2mg35hf5k0999k4.apps.googleusercontent.com')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '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')
 
-
-
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'APP': {
+            'client_id': GOOGLE_CLIENT_ID,
+            'secret': GOOGLE_CLIENT_SECRET,
+            'key': ''
+        }
+    }
+}
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-SITE_ID = 2
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'app': {
-            'client_id': '1010396436283-l09gfquikcau2kilodq5nmajr0ci8sm8.apps.googleusercontent.com',
-            'secret': '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',  
-            'key': ''
-        }
-    }
-}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -118,6 +133,26 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 
 from datetime import timedelta
@@ -134,12 +169,16 @@ SIMPLE_JWT = {
 }
 
 
-SENDGRID_API_KEY = "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"
-FROM_EMAIL = "srinadhyalagandula2002@gmail.com"
+# SENDGRID_API_KEY = "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"
+# FROM_EMAIL = "srinadhyalagandula2002@gmail.com"
+
+# ADMIN_EMAIL = "srinadhyalagandula2002@gmail.com"
+
+# Email fallback settings (use SendGrid API first; email backend can be used for debugging)
 
 
-ADMIN_EMAIL = "srinadhyalagandula2002@gmail.com"
-
+# For local debug you can use console backend with:
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -176,3 +215,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+LOGIN_REDIRECT_URL = "http://localhost:5173/dashboard"
+LOGOUT_REDIRECT_URL = "http://localhost:5173/login"
+
+# Media files for uploaded resumes
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+
