@@ -272,7 +272,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
 
     # Your apps
-    'maintain_resume',
+    
     'maintain_resume.apps.MaintainResumeConfig',
 ]
 TEMPLATES = [
