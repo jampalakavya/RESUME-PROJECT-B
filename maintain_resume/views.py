@@ -553,18 +553,31 @@ class ResumeListView(APIView):
         serializer = ResumeSerializer(resumes, many=True)
         return Response(serializer.data)
    
+import cloudinary.uploader
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+
 class DeleteResumeView(APIView):
-    permission_classes = [IsAdminUserCustom]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
         resume = get_object_or_404(Resume, id=pk)
 
-        # delete file also 
-        if resume.file:
-            resume.file.delete(save=False)
+        try:
+            # 🔥 DELETE FROM CLOUDINARY
+            if resume.file:
+                public_id = resume.file.public_id   # VERY IMPORTANT
+                cloudinary.uploader.destroy(public_id, resource_type="raw")
 
-        resume.delete()
-        return Response({"message": "Resume deleted"})
+            # 🔥 DELETE FROM DATABASE
+            resume.delete()
+
+            return Response({"message": "Deleted successfully"}, status=200)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
 
 from django.conf import settings
