@@ -566,12 +566,12 @@ class DeleteResumeView(APIView):
         resume = get_object_or_404(Resume, id=pk)
 
         try:
-            # 🔥 DELETE FROM CLOUDINARY
+            # DELETE FROM CLOUDINARY
             if resume.file:
                 public_id = resume.file.public_id   # VERY IMPORTANT
                 cloudinary.uploader.destroy(public_id, resource_type="raw")
 
-            # 🔥 DELETE FROM DATABASE
+            #  DELETE FROM DATABASE
             resume.delete()
 
             return Response({"message": "Deleted successfully"}, status=200)
@@ -587,6 +587,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.conf import settings
 from django.utils.timezone import now
+from django.shortcuts import redirect
 
 class DownloadResumeView(APIView):
     permission_classes = [AllowAny]
@@ -598,33 +599,26 @@ class DownloadResumeView(APIView):
             return Response({'error': 'File not found'}, status=404)
 
         try:
-            file_url = resume.file  # This is Cloudinary URL
+            # ✅ CORRECT URL
+            file_url = resume.file.url
 
-            #  Send notification email (same as your logic)
+            # OPTIONAL: email
             try:
                 message = f"""
-<!DOCTYPE html>
-<html>
-<body>
-<p>Resume <strong>{resume.name}</strong> was downloaded by {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
-<p>Email: {resume.email}</p>
-<p>Time: {now()}</p>
-</body>
-</html>
+Resume {resume.name} downloaded
 """
                 send_email(
                     subject="Resume Downloaded",
                     message=message,
                     to_email=settings.ADMIN_EMAIL
                 )
-            except Exception as e:
-                print("Email error:", e)
+            except:
+                pass
 
-            #  Redirect to Cloudinary file
             return redirect(file_url)
 
         except Exception as e:
-            return Response({'error': f'Download failed: {str(e)}'}, status=500)
+            return Response({'error': str(e)}, status=500)
 
 
 # class DownloadResumeView(APIView):
