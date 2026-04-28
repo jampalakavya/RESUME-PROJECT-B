@@ -538,11 +538,11 @@ class ResumeListView(APIView):
             'department', 'subdepartment'
         ).all()
 
-        # ✅ Department filter
+        #  Department filter
         if department:
             resumes = resumes.filter(department_id=department)
 
-        # ✅ Subdepartment filter (ONLY if valid)
+        # Subdepartment filter (ONLY if valid)
         if subdepartment and subdepartment != "":
             resumes = resumes.filter(subdepartment_id=subdepartment)
 
@@ -557,36 +557,7 @@ class ResumeListView(APIView):
 
         serializer = ResumeSerializer(resumes, many=True)
         return Response(serializer.data)
-# class ResumeListView(APIView):
-#     permission_classes = [IsAdminUserCustom]
-
-#     def get(self, request):
-#         department = request.GET.get('department')
-#         subdepartment = request.GET.get('subdepartment')
-#         search = request.GET.get('search')
-#         resumes = Resume.objects.all()
-#         # Filter by department
-#         if department:
-#             resumes = resumes.filter(department__id=department)
-
-#         #  Filter by subdepartment
-#         if subdepartment:
-#             resumes = resumes.filter(subdepartment__id=subdepartment)
-
-#         #  SEARCH 
-#         if search:
-#             resumes = resumes.filter(
-#                 Q(name__icontains=search) |
-#                 Q(email__icontains=search) |
-#                 Q(skills__icontains=search) |
-#                 Q(department__name__icontains=search) |
-#                 Q(subdepartment__name__icontains=search)
-#             )
-
-#         serializer = ResumeSerializer(resumes, many=True)
-#         return Response(serializer.data)
-    
-    
+   
 class DeleteResumeView(APIView):
     permission_classes = [IsAdminUserCustom]
 
