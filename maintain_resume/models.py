@@ -12,7 +12,7 @@ class SubDepartment(models.Model):
     name = models.CharField(max_length=100)
     def __str__(self):
         return f"{self.department.name} - {self.name}"
-
+from cloudinary.models import CloudinaryField
 class Resume(models.Model):
     user = models.ForeignKey(
     User, 
@@ -29,7 +29,8 @@ class Resume(models.Model):
     skills = models.TextField()
 
     name = models.CharField(max_length=200)
-    file = models.FileField(upload_to='resumes/')
+    # file = models.FileField(upload_to='resumes/')
+    file = CloudinaryField(resource_type='raw')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     experience = models.IntegerField(default=0)
     is_bookmarked=models.BooleanField(default=False)
