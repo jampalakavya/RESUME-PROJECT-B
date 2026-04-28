@@ -497,32 +497,94 @@ class SubDepartmentDeleteView(APIView):
         subdepartment = get_object_or_404(SubDepartment, id=pk)
         subdepartment.delete()
         return Response({"message": "SubDepartment deleted"})
+    
+import cloudinary.uploader
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 
+from .serializers import ResumeSerializer
 
 class UploadResumeView(APIView):
     permission_classes = [IsAuthenticated]
-    
+    parser_classes = (MultiPartParser, FormParser)
+
     def post(self, request):
-        if 'file' not in request.FILES:
+        file = request.FILES.get("file")
+
+        if not file:
             return Response({"error": "No file provided"}, status=400)
-        
-        serializer = ResumeSerializer(data=request.data)
+
+        try:
+            #  Upload to Cloudinary (RAW for PDF/DOC)
+            upload = cloudinary.uploader.upload(
+                file,
+                resource_type="raw",
+                folder="resumes"
+            )
+
+            file_url = upload.get("secure_url")
+            public_id = upload.get("public_id")
+
+        except Exception as e:
+            return Response(
+                {"error": f"Cloudinary upload failed: {str(e)}"},
+                status=500
+            )
+
+        #  Save data properly
+        data = request.data.copy()
+
+        # IMPORTANT:
+        # Store URL (for viewing)
+        data["file"] = file_url
+
+        # OPTIONAL (RECOMMENDED):
+        # Store public_id separately for delete later
+        data["public_id"] = public_id
+
+        serializer = ResumeSerializer(data=data)
 
         if serializer.is_valid():
-            #  attach logged-in user
             resume = serializer.save(user=request.user)
-            
-            # Verify file was saved
-            if not resume.file or not resume.file.name:
-                return Response({"error": "File was not saved properly"}, status=500)
-            
+
             return Response({
-                "message": "Resume uploaded", 
+                "message": "Resume uploaded",
                 "id": resume.id,
-                "file_url": resume.file.url
+                "file_url": file_url,
+                "public_id": public_id
             }, status=201)
 
-        return Response(serializer.errors, status=400)
+        return Response(serializer.errors, status=400)  
+
+# from rest_framework.parsers import MultiPartParser, FormParser
+# class UploadResumeView(APIView):
+#     permission_classes = [IsAuthenticated]
+#     parser_classes = (MultiPartParser, FormParser)   
+
+    
+#     def post(self, request):
+#         if 'file' not in request.FILES:
+#             return Response({"error": "No file provided"}, status=400)
+        
+#         serializer = ResumeSerializer(data=request.data)
+
+#         if serializer.is_valid():
+#             #  attach logged-in user
+#             resume = serializer.save(user=request.user)
+            
+#             # Verify file was saved
+#             if not resume.file or not resume.file.name:
+#                 return Response({"error": "File was not saved properly"}, status=500)
+            
+#             return Response({
+#                 "message": "Resume uploaded", 
+#                 "id": resume.id,
+#                 "file_url": resume.file.url
+#             }, status=201)
+
+#         return Response(serializer.errors, status=400)
     
 class ResumeListView(APIView):
     permission_classes = [IsAdminUserCustom]
@@ -573,6 +635,13 @@ class DeleteResumeView(APIView):
 
 
 from django.conf import settings
+from django.shortcuts import get_object_or_404, redirect
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from django.conf import settings
+from django.utils.timezone import now
+
 class DownloadResumeView(APIView):
     permission_classes = [AllowAny]
 
@@ -583,28 +652,9 @@ class DownloadResumeView(APIView):
             return Response({'error': 'File not found'}, status=404)
 
         try:
-            # Open file and return
-            file_path = resume.file.path
-            
-            if not os.path.exists(file_path):
-                return Response({'error': 'File does not exist on disk'}, status=404)
-            
-            def file_iterator(file_path, chunk_size=8192):
-                with open(file_path, 'rb') as f:
-                    while True:
-                        chunk = f.read(chunk_size)
-                        if not chunk:
-                            break
-                        yield chunk
+            file_url = resume.file  # This is Cloudinary URL
 
-            filename = os.path.basename(resume.file.name)
-            mime_type, _ = mimetypes.guess_type(filename)
-            
-            response = FileResponse(file_iterator(file_path))
-            response['Content-Type'] = mime_type or 'application/octet-stream'
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            
-            # Send notification email
+            #  Send notification email (same as your logic)
             try:
                 message = f"""
 <!DOCTYPE html>
@@ -621,13 +671,71 @@ class DownloadResumeView(APIView):
                     message=message,
                     to_email=settings.ADMIN_EMAIL
                 )
-            except:
-                pass  # Don't fail download if email fails
-            
-            return response
-            
+            except Exception as e:
+                print("Email error:", e)
+
+            #  Redirect to Cloudinary file
+            return redirect(file_url)
+
         except Exception as e:
             return Response({'error': f'Download failed: {str(e)}'}, status=500)
+
+
+# class DownloadResumeView(APIView):
+#     permission_classes = [AllowAny]
+
+#     def get(self, request, pk):
+#         resume = get_object_or_404(Resume, id=pk)
+
+#         if not resume.file:
+#             return Response({'error': 'File not found'}, status=404)
+
+#         try:
+#             # Open file and return
+#             file_path = resume.file.path
+            
+#             if not os.path.exists(file_path):
+#                 return Response({'error': 'File does not exist on disk'}, status=404)
+            
+#             def file_iterator(file_path, chunk_size=8192):
+#                 with open(file_path, 'rb') as f:
+#                     while True:
+#                         chunk = f.read(chunk_size)
+#                         if not chunk:
+#                             break
+#                         yield chunk
+
+#             filename = os.path.basename(resume.file.name)
+#             mime_type, _ = mimetypes.guess_type(filename)
+            
+#             response = FileResponse(file_iterator(file_path))
+#             response['Content-Type'] = mime_type or 'application/octet-stream'
+#             response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            
+#             # Send notification email
+#             try:
+#                 message = f"""
+# <!DOCTYPE html>
+# <html>
+# <body>
+# <p>Resume <strong>{resume.name}</strong> was downloaded by {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
+# <p>Email: {resume.email}</p>
+# <p>Time: {now()}</p>
+# </body>
+# </html>
+# """
+#                 send_email(
+#                     subject="Resume Downloaded",
+#                     message=message,
+#                     to_email=settings.ADMIN_EMAIL
+#                 )
+#             except:
+#                 pass  # Don't fail download if email fails
+            
+#             return response
+            
+#         except Exception as e:
+#             return Response({'error': f'Download failed: {str(e)}'}, status=500)
 
 
 
