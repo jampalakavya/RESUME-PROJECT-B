@@ -30,15 +30,9 @@ class ResumeSerializer(serializers.ModelSerializer):
             )
         return data
     def validate_file(self, value):
-    #  If it's already a Cloudinary URL (string), skip validation
-        if isinstance(value, str):
-            return value
-
-    #  Otherwise validate uploaded file
         allowed_ext = ('.pdf', '.doc', '.docx')
         if not value.name.lower().endswith(allowed_ext):
             raise serializers.ValidationError("Only PDF, DOC, and DOCX files are allowed")
-
         return value
 
 # serializers.py
