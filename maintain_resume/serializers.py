@@ -30,9 +30,15 @@ class ResumeSerializer(serializers.ModelSerializer):
             )
         return data
     def validate_file(self, value):
+    # Safety check
+        if not hasattr(value, 'name'):
+            raise serializers.ValidationError("Invalid file")
+
         allowed_ext = ('.pdf', '.doc', '.docx')
+
         if not value.name.lower().endswith(allowed_ext):
             raise serializers.ValidationError("Only PDF, DOC, and DOCX files are allowed")
+
         return value
 
 # serializers.py

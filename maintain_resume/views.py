@@ -498,53 +498,78 @@ class SubDepartmentDeleteView(APIView):
         subdepartment.delete()
         return Response({"message": "SubDepartment deleted"})
     
-import cloudinary.uploader
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser
+# import cloudinary.uploader
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework.permissions import IsAuthenticated
+# from rest_framework.parsers import MultiPartParser, FormParser
 
-from .serializers import ResumeSerializer
+# from .serializers import ResumeSerializer
+
+# class UploadResumeView(APIView):
+#     permission_classes = [IsAuthenticated]
+#     parser_classes = (MultiPartParser, FormParser)
+
+#     def post(self, request):
+#         file = request.FILES.get("file")
+
+#         if not file:
+#             return Response({"error": "No file provided"}, status=400)
+
+#         try:
+#             #  Upload to Cloudinary (RAW for PDF/DOC)
+#             upload = cloudinary.uploader.upload(
+#                 file,
+#                 resource_type="raw",
+#                 folder="resumes"
+#             )
+
+#             file_url = upload.get("secure_url")
+#             public_id = upload.get("public_id")
+
+#         except Exception as e:
+#             return Response(
+#                 {"error": f"Cloudinary upload failed: {str(e)}"},
+#                 status=500
+#             )
+
+#         #  Save data properly
+#         data = request.data.copy()
+
+#         # IMPORTANT:
+#         # Store URL (for viewing)
+#         data["file"] = file_url
+
+#         # OPTIONAL (RECOMMENDED):
+#         # Store public_id separately for delete later
+#         data["public_id"] = public_id
+
+#         serializer = ResumeSerializer(data=data)
+
+#         if serializer.is_valid():
+#             resume = serializer.save(user=request.user)
+
+#             return Response({
+#                 "message": "Resume uploaded",
+#                 "id": resume.id,
+#                 "file_url": file_url,
+#                 "public_id": public_id
+#             }, status=201)
+
+#         return Response(serializer.errors, status=400)  
+
+# from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class UploadResumeView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
-        file = request.FILES.get("file")
-
-        if not file:
+        if 'file' not in request.FILES:
             return Response({"error": "No file provided"}, status=400)
 
-        try:
-            #  Upload to Cloudinary (RAW for PDF/DOC)
-            upload = cloudinary.uploader.upload(
-                file,
-                resource_type="raw",
-                folder="resumes"
-            )
-
-            file_url = upload.get("secure_url")
-            public_id = upload.get("public_id")
-
-        except Exception as e:
-            return Response(
-                {"error": f"Cloudinary upload failed: {str(e)}"},
-                status=500
-            )
-
-        #  Save data properly
-        data = request.data.copy()
-
-        # IMPORTANT:
-        # Store URL (for viewing)
-        data["file"] = file_url
-
-        # OPTIONAL (RECOMMENDED):
-        # Store public_id separately for delete later
-        data["public_id"] = public_id
-
-        serializer = ResumeSerializer(data=data)
+        serializer = ResumeSerializer(data=request.data)
 
         if serializer.is_valid():
             resume = serializer.save(user=request.user)
@@ -552,13 +577,12 @@ class UploadResumeView(APIView):
             return Response({
                 "message": "Resume uploaded",
                 "id": resume.id,
-                "file_url": file_url,
-                "public_id": public_id
+                "file_url": resume.file.url
             }, status=201)
 
-        return Response(serializer.errors, status=400)  
+        return Response(serializer.errors, status=400)
+    
 
-# from rest_framework.parsers import MultiPartParser, FormParser
 # class UploadResumeView(APIView):
 #     permission_classes = [IsAuthenticated]
 #     parser_classes = (MultiPartParser, FormParser)   
@@ -585,7 +609,8 @@ class UploadResumeView(APIView):
 #             }, status=201)
 
 #         return Response(serializer.errors, status=400)
-    
+
+
 class ResumeListView(APIView):
     permission_classes = [IsAdminUserCustom]
 
