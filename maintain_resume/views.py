@@ -497,7 +497,8 @@ class SubDepartmentDeleteView(APIView):
         subdepartment = get_object_or_404(SubDepartment, id=pk)
         subdepartment.delete()
         return Response({"message": "SubDepartment deleted"})
-from rest_framework.parsers import MultiPartParser, FormParser    
+from rest_framework.parsers import MultiPartParser, FormParser
+
 class UploadResumeView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
@@ -506,18 +507,47 @@ class UploadResumeView(APIView):
         print("FILES:", request.FILES)
         print("DATA:", request.data)
 
-        serializer = ResumeSerializer(data=request.data)
+        file = request.FILES.get("file")
+
+        if not file:
+            return Response({"error": "No file provided"}, status=400)
+
+        data = request.data.copy()
+        data["file"] = file   # ✅ VERY IMPORTANT
+
+        serializer = ResumeSerializer(data=data)
 
         if serializer.is_valid():
             resume = serializer.save(user=request.user)
 
             return Response({
                 "message": "Uploaded",
-                "file_url": resume.file.url
+                "file_url": resume.file.url   # ✅ Cloudinary URL
             }, status=201)
 
         print("ERRORS:", serializer.errors)
-        return Response(serializer.errors, status=400)
+        return Response(serializer.errors, status=400)    
+# from rest_framework.parsers import MultiPartParser, FormParser    
+# class UploadResumeView(APIView):
+#     permission_classes = [IsAuthenticated]
+#     parser_classes = (MultiPartParser, FormParser)
+
+#     def post(self, request):
+#         print("FILES:", request.FILES)
+#         print("DATA:", request.data)
+
+#         serializer = ResumeSerializer(data=request.data)
+
+#         if serializer.is_valid():
+#             resume = serializer.save(user=request.user)
+
+#             return Response({
+#                 "message": "Uploaded",
+#                 "file_url": resume.file.url
+#             }, status=201)
+
+#         print("ERRORS:", serializer.errors)
+#         return Response(serializer.errors, status=400)
     
 class ResumeListView(APIView):
     permission_classes = [IsAdminUserCustom]
@@ -587,7 +617,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.conf import settings
 from django.utils.timezone import now
-from django.shortcuts import redirect
 
 class DownloadResumeView(APIView):
     permission_classes = [AllowAny]
@@ -599,26 +628,33 @@ class DownloadResumeView(APIView):
             return Response({'error': 'File not found'}, status=404)
 
         try:
-            # ✅ CORRECT URL
-            file_url = resume.file.url
+            file_url = resume.file  # This is Cloudinary URL
 
-            # OPTIONAL: email
+            #  Send notification email (same as your logic)
             try:
                 message = f"""
-Resume {resume.name} downloaded
+<!DOCTYPE html>
+<html>
+<body>
+<p>Resume <strong>{resume.name}</strong> was downloaded by {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
+<p>Email: {resume.email}</p>
+<p>Time: {now()}</p>
+</body>
+</html>
 """
                 send_email(
                     subject="Resume Downloaded",
                     message=message,
                     to_email=settings.ADMIN_EMAIL
                 )
-            except:
-                pass
+            except Exception as e:
+                print("Email error:", e)
 
+            #  Redirect to Cloudinary file
             return redirect(file_url)
 
         except Exception as e:
-            return Response({'error': str(e)}, status=500)
+            return Response({'error': f'Download failed: {str(e)}'}, status=500)
 
 
 # class DownloadResumeView(APIView):
