@@ -628,7 +628,7 @@ class DownloadResumeView(APIView):
             return Response({'error': 'File not found'}, status=404)
 
         try:
-            file_url = resume.file  # This is Cloudinary URL
+            file_url = resume.file.url # This is Cloudinary URL
 
             #  Send notification email (same as your logic)
             try:
