@@ -834,32 +834,29 @@ class ResumeHistoryView(APIView):
     def get(self, request):
         try:
             user = request.user
-            print("CURRENT USER:", user.id, user.username)
+            print("CURRENT USER:", user)
 
             if user.is_superuser:
                 resumes = Resume.objects.all().select_related('user', 'department', 'subdepartment')
             else:
-                # 🔥 FIX HERE
-                resumes = Resume.objects.filter(user_id=user.id).select_related(
-                    'user', 'department', 'subdepartment'
-                )
+                resumes = Resume.objects.filter(user_id=user.id).select_related('user', 'department', 'subdepartment')
 
             data = []
 
             for r in resumes:
                 data.append({
                     "id": r.id,
-                    "filename": (r.file.name.split("/")[-1] if r.file else r.name),
+                    "filename": (r.file.name.split("/")[-1] if r.file and r.file.name else r.name),
                     "uploaded_at": r.uploaded_at,
                     "user": (r.user.username if r.user else "Unknown"),
-                    "department": getattr(r.department, "name", "N/A"),
-                    "subdepartment": getattr(r.subdepartment, "name", None),
+                    "department": (r.department.name if r.department else "N/A"),
+                    "subdepartment": (r.subdepartment.name if r.subdepartment else None),
                 })
 
             return Response(data)
 
         except Exception as e:
-            print("❌ GLOBAL ERROR:", str(e))
+            print("🔥 ERROR:", str(e))   # VERY IMPORTANT
             return Response({"error": str(e)}, status=500)
 
 # class ResumeHistoryView(APIView):
