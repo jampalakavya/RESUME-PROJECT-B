@@ -30,7 +30,8 @@ class Resume(models.Model):
 
     name = models.CharField(max_length=200)
     # file = models.FileField(upload_to='resumes/')
-    file = CloudinaryField(resource_type='auto', folder='resumes')
+    file = CloudinaryField(resource_type='raw', folder='resumes')
+    # file = models.URLField()
     public_id = models.CharField(max_length=255, blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     experience = models.IntegerField(default=0)
