@@ -528,27 +528,6 @@ class UploadResumeView(APIView):
 
         print("ERRORS:", serializer.errors)
         return Response(serializer.errors, status=400)    
-# from rest_framework.parsers import MultiPartParser, FormParser    
-# class UploadResumeView(APIView):
-#     permission_classes = [IsAuthenticated]
-#     parser_classes = (MultiPartParser, FormParser)
-
-#     def post(self, request):
-#         print("FILES:", request.FILES)
-#         print("DATA:", request.data)
-
-#         serializer = ResumeSerializer(data=request.data)
-
-#         if serializer.is_valid():
-#             resume = serializer.save(user=request.user)
-
-#             return Response({
-#                 "message": "Uploaded",
-#                 "file_url": resume.file.url
-#             }, status=201)
-
-#         print("ERRORS:", serializer.errors)
-#         return Response(serializer.errors, status=400)
     
 class ResumeListView(APIView):
     permission_classes = [IsAdminUserCustom]
@@ -610,180 +589,49 @@ class DeleteResumeView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-
-# from django.conf import settings
-# from django.shortcuts import get_object_or_404, redirect
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from rest_framework.permissions import AllowAny
-# from django.conf import settings
-# from django.utils.timezone import now
-
-# class DownloadResumeView(APIView):
-#     permission_classes = [AllowAny]
-
-#     def get(self, request, pk):
-#         resume = get_object_or_404(Resume, id=pk)
-
-#         if not resume.file:
-#             return Response({'error': 'File not found'}, status=404)
-
-#         try:
-#             file_url = resume.file.url
-#              # This is Cloudinary URL
-
-#             #  Send notification email (same as your logic)
-#             try:
-#                 message = f"""
-# <!DOCTYPE html>
-# <html>
-# <body>
-# <p>Resume <strong>{resume.name}</strong> was downloaded by {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
-# <p>Email: {resume.email}</p>
-# <p>Time: {now()}</p>
-# </body>
-# </html>
-# """
-#                 send_email(
-#                     subject="Resume Downloaded",
-#                     message=message,
-#                     to_email=settings.ADMIN_EMAIL
-#                 )
-#             except Exception as e:
-#                 print("Email error:", e)
-
-#             #  Redirect to Cloudinary file
-#             return redirect(file_url)
-
-#         except Exception as e:
-#             return Response({'error': f'Download failed: {str(e)}'}, status=500)
-
-
-# from django.conf import settings
-# from django.shortcuts import get_object_or_404, redirect
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from rest_framework.permissions import AllowAny
-# from django.utils.timezone import now
-
-# class DownloadResumeView(APIView):
-#     permission_classes = [AllowAny]
-
-#     def get(self, request, pk):
-#         resume = get_object_or_404(Resume, id=pk)
-
-#         if not resume.file:
-#             return Response({'error': 'File not found'}, status=404)
-
-#         try:
-#             # ✅ GET CLOUDINARY URL
-#             file_url = resume.file.url
-
-#             # ✅ FORCE DOWNLOAD (THIS IS THE FIX)
-#             download_url = file_url.replace("/upload/", "/upload/fl_attachment/")
-
-#             # -------- KEEP YOUR EMAIL LOGIC -------- #
-#             try:
-#                 message = f"""
-# <!DOCTYPE html>
-# <html>
-# <body>
-# <p>Resume <strong>{resume.name}</strong> was downloaded by {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
-# <p>Email: {resume.email}</p>
-# <p>Time: {now()}</p>
-# </body>
-# </html>
-# """
-#                 send_email(
-#                     subject="Resume Downloaded",
-#                     message=message,
-#                     to_email=settings.ADMIN_EMAIL
-#                 )
-#             except Exception as e:
-#                 print("Email error:", e)
-
-#             # ✅ REDIRECT TO DOWNLOAD URL
-#             return redirect(download_url)
-
-#         except Exception as e:
-#             return Response({'error': f'Download failed: {str(e)}'}, status=500)
-
-
-from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.utils.timezone import now
+from django.conf import settings
 
-# class DownloadResumeView(APIView):
-#     permission_classes = [AllowAny]
+from .models import Resume
+from .utils import send_email
 
-#     def get(self, request, pk):
-#         resume = get_object_or_404(Resume, id=pk)
-
-#         if not resume.file:
-#             return Response({'error': 'File not found'}, status=404)
-
-#         try:
-#             # ✅ GET CLOUDINARY URL
-#             file_url = resume.file.url
-
-#             # ✅ TRY FORCE DOWNLOAD
-#             if "/upload/" in file_url:
-#                 download_url = file_url.replace("/upload/", "/upload/fl_attachment/")
-#             else:
-#                 download_url = file_url   # fallback
-
-#             # -------- KEEP YOUR EMAIL LOGIC -------- #
-#             try:
-#                 message = f"""
-# <!DOCTYPE html>
-# <html>
-# <body>
-# <p>Resume <strong>{resume.name}</strong> was downloaded by {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
-# <p>Email: {resume.email}</p>
-# <p>Time: {now()}</p>
-# </body>
-# </html>
-# """
-#                 send_email(
-#                     subject="Resume Downloaded",
-#                     message=message,
-#                     to_email=settings.ADMIN_EMAIL
-#                 )
-#             except Exception as e:
-#                 print("Email error:", e)
-
-#             # ✅ REDIRECT
-#             return redirect(download_url)
-
-#         except Exception as e:
-#             return Response({'error': f'Download failed: {str(e)}'}, status=500)
 
 class DownloadResumeView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, pk):
+        # 🔍 Get resume
         resume = get_object_or_404(Resume, id=pk)
 
+        # ❌ If no file
         if not resume.file:
             return Response({"error": "File not found"}, status=404)
 
         try:
+            # 🌐 Cloudinary URL
             file_url = resume.file.url
 
-            # 🔥 UNIVERSAL FIX (handles image + raw)
+            # 🔥 FIX CLOUDINARY TYPE (IMPORTANT)
+            # Converts image → raw (needed for PDFs/docs)
+            file_url = file_url.replace("/image/upload/", "/raw/upload/")
+
+            # 🔥 FORCE DOWNLOAD
             download_url = file_url.replace(
                 "/upload/", "/upload/fl_attachment/"
             )
 
-            # Email (optional)
+            # 📧 SEND EMAIL (optional)
             try:
                 message = f"""
-Resume {resume.name} downloaded by 
-{request.user.username if request.user.is_authenticated else 'Anonymous'}
-Time: {now()}
+<h3>Resume Downloaded</h3>
+<p><strong>Name:</strong> {resume.name}</p>
+<p><strong>Email:</strong> {resume.email}</p>
+<p><strong>Downloaded by:</strong> {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
+<p><strong>Time:</strong> {now()}</p>
 """
                 send_email(
                     subject="Resume Downloaded",
@@ -793,6 +641,7 @@ Time: {now()}
             except Exception as e:
                 print("Email error:", e)
 
+            # 🚀 Redirect to download
             return redirect(download_url)
 
         except Exception as e:
@@ -800,6 +649,7 @@ Time: {now()}
                 {"error": f"Download failed: {str(e)}"},
                 status=500
             )
+
 class CreateResume(APIView):
     permission_classes = [IsAuthenticated]
 
