@@ -834,13 +834,13 @@ class ResumeHistoryView(APIView):
         data = []
         for r in resumes:
             data.append({
-                "id": r.id,
-                "filename": r.file.name.split("/")[-1] if r.file else r.name,
-                "uploaded_at": r.uploaded_at,
-                "user": r.user.username if r.user else "Unknown",
-                "department": r.department.name,
-                "subdepartment": r.subdepartment.name if r.subdepartment else None,
-            })
+    "id": r.id,
+    "filename": r.file.name.split("/")[-1] if r.file else r.name,
+    "uploaded_at": r.uploaded_at,
+    "user": r.user.username if r.user else "Unknown",
+    "department": getattr(r.department, "name", "N/A"),
+    "subdepartment": getattr(r.subdepartment, "name", None),
+})
 
         return Response(data)
 from rest_framework.decorators import api_view, permission_classes
