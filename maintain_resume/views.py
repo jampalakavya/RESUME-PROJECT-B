@@ -610,12 +610,59 @@ class DeleteResumeView(APIView):
             return Response({"error": str(e)}, status=500)
 
 
+# from django.conf import settings
+# from django.shortcuts import get_object_or_404, redirect
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework.permissions import AllowAny
+# from django.conf import settings
+# from django.utils.timezone import now
+
+# class DownloadResumeView(APIView):
+#     permission_classes = [AllowAny]
+
+#     def get(self, request, pk):
+#         resume = get_object_or_404(Resume, id=pk)
+
+#         if not resume.file:
+#             return Response({'error': 'File not found'}, status=404)
+
+#         try:
+#             file_url = resume.file.url
+#              # This is Cloudinary URL
+
+#             #  Send notification email (same as your logic)
+#             try:
+#                 message = f"""
+# <!DOCTYPE html>
+# <html>
+# <body>
+# <p>Resume <strong>{resume.name}</strong> was downloaded by {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
+# <p>Email: {resume.email}</p>
+# <p>Time: {now()}</p>
+# </body>
+# </html>
+# """
+#                 send_email(
+#                     subject="Resume Downloaded",
+#                     message=message,
+#                     to_email=settings.ADMIN_EMAIL
+#                 )
+#             except Exception as e:
+#                 print("Email error:", e)
+
+#             #  Redirect to Cloudinary file
+#             return redirect(file_url)
+
+#         except Exception as e:
+#             return Response({'error': f'Download failed: {str(e)}'}, status=500)
+
+
 from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from django.conf import settings
 from django.utils.timezone import now
 
 class DownloadResumeView(APIView):
@@ -628,9 +675,13 @@ class DownloadResumeView(APIView):
             return Response({'error': 'File not found'}, status=404)
 
         try:
-            file_url = resume.file.url # This is Cloudinary URL
+            # ✅ GET CLOUDINARY URL
+            file_url = resume.file.url
 
-            #  Send notification email (same as your logic)
+            # ✅ FORCE DOWNLOAD (THIS IS THE FIX)
+            download_url = file_url.replace("/upload/", "/upload/fl_attachment/")
+
+            # -------- KEEP YOUR EMAIL LOGIC -------- #
             try:
                 message = f"""
 <!DOCTYPE html>
@@ -650,68 +701,11 @@ class DownloadResumeView(APIView):
             except Exception as e:
                 print("Email error:", e)
 
-            #  Redirect to Cloudinary file
-            return redirect(file_url)
+            # ✅ REDIRECT TO DOWNLOAD URL
+            return redirect(download_url)
 
         except Exception as e:
             return Response({'error': f'Download failed: {str(e)}'}, status=500)
-
-
-# class DownloadResumeView(APIView):
-#     permission_classes = [AllowAny]
-
-#     def get(self, request, pk):
-#         resume = get_object_or_404(Resume, id=pk)
-
-#         if not resume.file:
-#             return Response({'error': 'File not found'}, status=404)
-
-#         try:
-#             # Open file and return
-#             file_path = resume.file.path
-            
-#             if not os.path.exists(file_path):
-#                 return Response({'error': 'File does not exist on disk'}, status=404)
-            
-#             def file_iterator(file_path, chunk_size=8192):
-#                 with open(file_path, 'rb') as f:
-#                     while True:
-#                         chunk = f.read(chunk_size)
-#                         if not chunk:
-#                             break
-#                         yield chunk
-
-#             filename = os.path.basename(resume.file.name)
-#             mime_type, _ = mimetypes.guess_type(filename)
-            
-#             response = FileResponse(file_iterator(file_path))
-#             response['Content-Type'] = mime_type or 'application/octet-stream'
-#             response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            
-#             # Send notification email
-#             try:
-#                 message = f"""
-# <!DOCTYPE html>
-# <html>
-# <body>
-# <p>Resume <strong>{resume.name}</strong> was downloaded by {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
-# <p>Email: {resume.email}</p>
-# <p>Time: {now()}</p>
-# </body>
-# </html>
-# """
-#                 send_email(
-#                     subject="Resume Downloaded",
-#                     message=message,
-#                     to_email=settings.ADMIN_EMAIL
-#                 )
-#             except:
-#                 pass  # Don't fail download if email fails
-            
-#             return response
-            
-#         except Exception as e:
-#             return Response({'error': f'Download failed: {str(e)}'}, status=500)
 
 
 
