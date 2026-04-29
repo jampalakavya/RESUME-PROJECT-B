@@ -824,42 +824,79 @@ class MyUploadHistoryView(APIView):
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 class ResumeHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
-            # 🔐 Check user
             user = request.user
-            print("CURRENT USER:", user)
+            print("CURRENT USER:", user.id, user.username)
 
-            # 📊 Get data
             if user.is_superuser:
                 resumes = Resume.objects.all().select_related('user', 'department', 'subdepartment')
             else:
-                resumes = Resume.objects.filter(user=user).select_related('user', 'department', 'subdepartment')
+                # 🔥 FIX HERE
+                resumes = Resume.objects.filter(user_id=user.id).select_related(
+                    'user', 'department', 'subdepartment'
+                )
 
             data = []
 
             for r in resumes:
-                try:
-                    data.append({
-                        "id": r.id,
-                        "filename": (r.file.name.split("/")[-1] if r.file else r.name),
-                        "uploaded_at": r.uploaded_at,
-                        "user": (r.user.username if r.user else "Unknown"),
-                        "department": getattr(r.department, "name", "N/A"),
-                        "subdepartment": getattr(r.subdepartment, "name", None),
-                    })
-                except Exception as e:
-                    print(f"❌ Error in resume {r.id}: {e}")  # debug per row
+                data.append({
+                    "id": r.id,
+                    "filename": (r.file.name.split("/")[-1] if r.file else r.name),
+                    "uploaded_at": r.uploaded_at,
+                    "user": (r.user.username if r.user else "Unknown"),
+                    "department": getattr(r.department, "name", "N/A"),
+                    "subdepartment": getattr(r.subdepartment, "name", None),
+                })
 
             return Response(data)
 
         except Exception as e:
             print("❌ GLOBAL ERROR:", str(e))
-            return Response({"error": str(e)}, status=500)    
+            return Response({"error": str(e)}, status=500)
+
+# class ResumeHistoryView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         try:
+#             # 🔐 Check user
+#             user = request.user
+#             print("CURRENT USER:", user)
+
+#             # 📊 Get data
+#             if user.is_superuser:
+#                 resumes = Resume.objects.all().select_related('user', 'department', 'subdepartment')
+#             else:
+#                 resumes = Resume.objects.filter(user=user).select_related('user', 'department', 'subdepartment')
+
+#             data = []
+
+#             for r in resumes:
+#                 try:
+#                     data.append({
+#                         "id": r.id,
+#                         "filename": (r.file.name.split("/")[-1] if r.file else r.name),
+#                         "uploaded_at": r.uploaded_at,
+#                         "user": (r.user.username if r.user else "Unknown"),
+#                         "department": getattr(r.department, "name", "N/A"),
+#                         "subdepartment": getattr(r.subdepartment, "name", None),
+#                     })
+#                 except Exception as e:
+#                     print(f"❌ Error in resume {r.id}: {e}")  # debug per row
+
+#             return Response(data)
+
+#         except Exception as e:
+#             print("❌ GLOBAL ERROR:", str(e))
+#             return Response({"error": str(e)}, status=500)    
     
     
 # class ResumeHistoryView(APIView):
