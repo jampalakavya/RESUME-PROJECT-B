@@ -497,73 +497,37 @@ class SubDepartmentDeleteView(APIView):
         subdepartment = get_object_or_404(SubDepartment, id=pk)
         subdepartment.delete()
         return Response({"message": "SubDepartment deleted"})
-    
 from rest_framework.parsers import MultiPartParser, FormParser
-import cloudinary.uploader
 
 class UploadResumeView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
+        print("FILES:", request.FILES)
+        print("DATA:", request.data)
+
         file = request.FILES.get("file")
 
         if not file:
             return Response({"error": "No file provided"}, status=400)
 
-        # ✅ Upload to Cloudinary manually (CORRECT WAY)
-        result = cloudinary.uploader.upload(
-            file,
-            resource_type="raw"   # 🔥 THIS FIXES YOUR ISSUE
-        )
-
-        file_url = result["secure_url"]
-
-        # ✅ Now save to DB
         data = request.data.copy()
-        data["file"] = file_url   # store URL instead of file
+        data["file"] = file   #  VERY IMPORTANT
 
         serializer = ResumeSerializer(data=data)
 
         if serializer.is_valid():
             resume = serializer.save(user=request.user)
+            resume.file.resource_type = "auto"
 
             return Response({
                 "message": "Uploaded",
-                "file_url": file_url
+                "file_url": resume.file.url   #  Cloudinary URL
             }, status=201)
 
-        return Response(serializer.errors, status=400)
-
-# class UploadResumeView(APIView):
-#     permission_classes = [IsAuthenticated]
-#     parser_classes = (MultiPartParser, FormParser)
-
-#     def post(self, request):
-#         print("FILES:", request.FILES)
-#         print("DATA:", request.data)
-
-#         file = request.FILES.get("file")
-
-#         if not file:
-#             return Response({"error": "No file provided"}, status=400)
-
-#         data = request.data.copy()
-#         data["file"] = file   #  VERY IMPORTANT
-
-#         serializer = ResumeSerializer(data=data)
-
-#         if serializer.is_valid():
-#             resume = serializer.save(user=request.user)
-#             resume.file.resource_type = "auto"
-
-#             return Response({
-#                 "message": "Uploaded",
-#                 "file_url": resume.file.url   #  Cloudinary URL
-#             }, status=201)
-
-#         print("ERRORS:", serializer.errors)
-#         return Response(serializer.errors, status=400)    
+        print("ERRORS:", serializer.errors)
+        return Response(serializer.errors, status=400)    
     
 class ResumeListView(APIView):
     permission_classes = [IsAdminUserCustom]
