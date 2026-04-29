@@ -519,6 +519,7 @@ class UploadResumeView(APIView):
 
         if serializer.is_valid():
             resume = serializer.save(user=request.user)
+            resume.file.resource_type = "auto"
 
             return Response({
                 "message": "Uploaded",
