@@ -588,43 +588,69 @@ class DeleteResumeView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
-
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from django.http import HttpResponse
 from django.utils.timezone import now
 from django.conf import settings
 
 from .models import Resume
 from .utils import send_email
 import requests
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
-
-from .models import Resume
 
 
 class DownloadResumeView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, pk):
+        # 🔍 Get resume
         resume = get_object_or_404(Resume, id=pk)
 
+        # ❌ If no file
         if not resume.file:
             return HttpResponse("File not found", status=404)
 
         try:
+            # 🌐 Get Cloudinary URL
             file_url = resume.file.url
 
+            # 🔥 Fetch file from Cloudinary
             response = requests.get(file_url)
 
             if response.status_code != 200:
                 return HttpResponse("Failed to fetch file", status=500)
 
-            # 🔥 THIS LINE FORCES DOWNLOAD
+            # 📧 SEND EMAIL (ADDED - without breaking your flow)
+            try:
+                user_name = (
+                    request.user.username
+                    if request.user.is_authenticated
+                    else "Anonymous"
+                )
+
+                message = f"""
+<!DOCTYPE html>
+<html>
+<body>
+<p>Resume <strong>{resume.name}</strong> was downloaded</p>
+<p><strong>Email:</strong> {resume.email}</p>
+<p><strong>Downloaded by:</strong> {user_name}</p>
+<p><strong>Time:</strong> {now()}</p>
+</body>
+</html>
+"""
+
+                send_email(
+                    subject="Resume Downloaded",
+                    message=message,
+                    to_email=settings.ADMIN_EMAIL
+                )
+
+            except Exception as email_error:
+                print("Email error:", email_error)
+
+            # 🔥 FORCE DOWNLOAD (your original logic)
             file_response = HttpResponse(
                 response.content,
                 content_type="application/pdf"
@@ -634,7 +660,54 @@ class DownloadResumeView(APIView):
             return file_response
 
         except Exception as e:
-            return HttpResponse(f"Error: {str(e)}", status=500)
+            return HttpResponse(f"Error: {str(e)}", status=500)        
+
+# from django.shortcuts import get_object_or_404, redirect
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from rest_framework.permissions import AllowAny
+# from django.utils.timezone import now
+# from django.conf import settings
+
+# from .models import Resume
+# from .utils import send_email
+# import requests
+# from django.http import HttpResponse
+# from django.shortcuts import get_object_or_404
+# from rest_framework.views import APIView
+# from rest_framework.permissions import AllowAny
+
+# from .models import Resume
+
+
+# class DownloadResumeView(APIView):
+#     permission_classes = [AllowAny]
+
+#     def get(self, request, pk):
+#         resume = get_object_or_404(Resume, id=pk)
+
+#         if not resume.file:
+#             return HttpResponse("File not found", status=404)
+
+#         try:
+#             file_url = resume.file.url
+
+#             response = requests.get(file_url)
+
+#             if response.status_code != 200:
+#                 return HttpResponse("Failed to fetch file", status=500)
+
+#             #  THIS LINE FORCES DOWNLOAD
+#             file_response = HttpResponse(
+#                 response.content,
+#                 content_type="application/pdf"
+#             )
+#             file_response["Content-Disposition"] = f'attachment; filename="{resume.name}.pdf"'
+
+#             return file_response
+
+#         except Exception as e:
+#             return HttpResponse(f"Error: {str(e)}", status=500)
 
 
 # class DownloadResumeView(APIView):
