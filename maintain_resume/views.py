@@ -504,6 +504,7 @@ class UploadResumeView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
+        print("UPLOAD USER:", request.user.id, request.user.username)
         print("FILES:", request.FILES)
         print("DATA:", request.data)
 
