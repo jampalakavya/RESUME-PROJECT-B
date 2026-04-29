@@ -98,7 +98,7 @@ class ResumeSerializer(serializers.ModelSerializer):
         if not hasattr(value, 'name'):
             raise serializers.ValidationError("Invalid file")
 
-        allowed_ext = ('.pdf', '.doc', '.docx')
+        allowed_ext = ('.pdf', '.doc', '.docx','.txt')
 
         if not value.name.lower().endswith(allowed_ext):
             raise serializers.ValidationError(
