@@ -598,57 +598,94 @@ from django.conf import settings
 
 from .models import Resume
 from .utils import send_email
+import requests
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+
+from .models import Resume
 
 
 class DownloadResumeView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, pk):
-        # 🔍 Get resume
         resume = get_object_or_404(Resume, id=pk)
 
-        # ❌ If no file
         if not resume.file:
-            return Response({"error": "File not found"}, status=404)
+            return HttpResponse("File not found", status=404)
 
         try:
-            # 🌐 Cloudinary URL
             file_url = resume.file.url
 
-            # 🔥 FIX CLOUDINARY TYPE (IMPORTANT)
-            # Converts image → raw (needed for PDFs/docs)
-            
+            response = requests.get(file_url)
 
-            # 🔥 FORCE DOWNLOAD
-            download_url = file_url.replace(
-                "/upload/", "/upload/fl_attachment/"
+            if response.status_code != 200:
+                return HttpResponse("Failed to fetch file", status=500)
+
+            # 🔥 THIS LINE FORCES DOWNLOAD
+            file_response = HttpResponse(
+                response.content,
+                content_type="application/pdf"
             )
+            file_response["Content-Disposition"] = f'attachment; filename="{resume.name}.pdf"'
 
-            # 📧 SEND EMAIL (optional)
-            try:
-                message = f"""
-<h3>Resume Downloaded</h3>
-<p><strong>Name:</strong> {resume.name}</p>
-<p><strong>Email:</strong> {resume.email}</p>
-<p><strong>Downloaded by:</strong> {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
-<p><strong>Time:</strong> {now()}</p>
-"""
-                send_email(
-                    subject="Resume Downloaded",
-                    message=message,
-                    to_email=settings.DEFAULT_FROM_EMAIL
-                )
-            except Exception as e:
-                print("Email error:", e)
-
-            # 🚀 Redirect to download
-            return redirect(download_url)
+            return file_response
 
         except Exception as e:
-            return Response(
-                {"error": f"Download failed: {str(e)}"},
-                status=500
-            )
+            return HttpResponse(f"Error: {str(e)}", status=500)
+
+
+# class DownloadResumeView(APIView):
+#     permission_classes = [AllowAny]
+
+#     def get(self, request, pk):
+#         # 🔍 Get resume
+#         resume = get_object_or_404(Resume, id=pk)
+
+#         # ❌ If no file
+#         if not resume.file:
+#             return Response({"error": "File not found"}, status=404)
+
+#         try:
+#             # 🌐 Cloudinary URL
+#             file_url = resume.file.url
+
+#             # 🔥 FIX CLOUDINARY TYPE (IMPORTANT)
+#             # Converts image → raw (needed for PDFs/docs)
+            
+
+#             # 🔥 FORCE DOWNLOAD
+#             download_url = file_url.replace(
+#                 "/upload/", "/upload/fl_attachment/"
+#             )
+
+#             # 📧 SEND EMAIL (optional)
+#             try:
+#                 message = f"""
+# <h3>Resume Downloaded</h3>
+# <p><strong>Name:</strong> {resume.name}</p>
+# <p><strong>Email:</strong> {resume.email}</p>
+# <p><strong>Downloaded by:</strong> {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
+# <p><strong>Time:</strong> {now()}</p>
+# """
+#                 send_email(
+#                     subject="Resume Downloaded",
+#                     message=message,
+#                     to_email=settings.DEFAULT_FROM_EMAIL
+#                 )
+#             except Exception as e:
+#                 print("Email error:", e)
+
+#             # 🚀 Redirect to download
+#             return redirect(download_url)
+
+#         except Exception as e:
+#             return Response(
+#                 {"error": f"Download failed: {str(e)}"},
+#                 status=500
+#             )
 
 class CreateResume(APIView):
     permission_classes = [IsAuthenticated]
