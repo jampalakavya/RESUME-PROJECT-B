@@ -617,7 +617,7 @@ class DownloadResumeView(APIView):
 
             # 🔥 FIX CLOUDINARY TYPE (IMPORTANT)
             # Converts image → raw (needed for PDFs/docs)
-            file_url = file_url.replace("/image/upload/", "/raw/upload/")
+            
 
             # 🔥 FORCE DOWNLOAD
             download_url = file_url.replace(
