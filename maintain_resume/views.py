@@ -23,17 +23,13 @@ from django.db.models import Q
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer, UserProfileSerializer
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-
 from .serializers import UserResumeSerializer
 from .models import UserResume
 from .utils import generate_pdf
-
 from .permissions import IsAdminUserCustom
-
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
@@ -662,105 +658,6 @@ class DownloadResumeView(APIView):
 
         except Exception as e:
             return HttpResponse(f"Error: {str(e)}", status=500)        
-
-# from django.shortcuts import get_object_or_404, redirect
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from rest_framework.permissions import AllowAny
-# from django.utils.timezone import now
-# from django.conf import settings
-
-# from .models import Resume
-# from .utils import send_email
-# import requests
-# from django.http import HttpResponse
-# from django.shortcuts import get_object_or_404
-# from rest_framework.views import APIView
-# from rest_framework.permissions import AllowAny
-
-# from .models import Resume
-
-
-# class DownloadResumeView(APIView):
-#     permission_classes = [AllowAny]
-
-#     def get(self, request, pk):
-#         resume = get_object_or_404(Resume, id=pk)
-
-#         if not resume.file:
-#             return HttpResponse("File not found", status=404)
-
-#         try:
-#             file_url = resume.file.url
-
-#             response = requests.get(file_url)
-
-#             if response.status_code != 200:
-#                 return HttpResponse("Failed to fetch file", status=500)
-
-#             #  THIS LINE FORCES DOWNLOAD
-#             file_response = HttpResponse(
-#                 response.content,
-#                 content_type="application/pdf"
-#             )
-#             file_response["Content-Disposition"] = f'attachment; filename="{resume.name}.pdf"'
-
-#             return file_response
-
-#         except Exception as e:
-#             return HttpResponse(f"Error: {str(e)}", status=500)
-
-
-# class DownloadResumeView(APIView):
-#     permission_classes = [AllowAny]
-
-#     def get(self, request, pk):
-#         # 🔍 Get resume
-#         resume = get_object_or_404(Resume, id=pk)
-
-#         # ❌ If no file
-#         if not resume.file:
-#             return Response({"error": "File not found"}, status=404)
-
-#         try:
-#             # 🌐 Cloudinary URL
-#             file_url = resume.file.url
-
-#             # 🔥 FIX CLOUDINARY TYPE (IMPORTANT)
-#             # Converts image → raw (needed for PDFs/docs)
-            
-
-#             # 🔥 FORCE DOWNLOAD
-#             download_url = file_url.replace(
-#                 "/upload/", "/upload/fl_attachment/"
-#             )
-
-#             # 📧 SEND EMAIL (optional)
-#             try:
-#                 message = f"""
-# <h3>Resume Downloaded</h3>
-# <p><strong>Name:</strong> {resume.name}</p>
-# <p><strong>Email:</strong> {resume.email}</p>
-# <p><strong>Downloaded by:</strong> {request.user.username if request.user.is_authenticated else 'Anonymous'}</p>
-# <p><strong>Time:</strong> {now()}</p>
-# """
-#                 send_email(
-#                     subject="Resume Downloaded",
-#                     message=message,
-#                     to_email=settings.DEFAULT_FROM_EMAIL
-#                 )
-#             except Exception as e:
-#                 print("Email error:", e)
-
-#             # 🚀 Redirect to download
-#             return redirect(download_url)
-
-#         except Exception as e:
-#             return Response(
-#                 {"error": f"Download failed: {str(e)}"},
-#                 status=500
-#             )
-
 class CreateResume(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -846,7 +743,8 @@ class ResumeHistoryView(APIView):
             for r in resumes:
                 data.append({
                     "id": r.id,
-                    "filename": (r.file.name.split("/")[-1] if r.file and r.file.name else r.name),
+                    #"filename": (r.file.name.split("/")[-1] if r.file and r.file.name else r.name),
+                    "filename": (r.file.public_id.split("/")[-1] if r.file else r.name),
                     "uploaded_at": r.uploaded_at,
                     "user": (r.user.username if r.user else "Unknown"),
                     "department": (r.department.name if r.department else "N/A"),
@@ -856,67 +754,9 @@ class ResumeHistoryView(APIView):
             return Response(data)
 
         except Exception as e:
-            print("🔥 ERROR:", str(e))   # VERY IMPORTANT
+            print(" ERROR:", str(e))   # VERY IMPORTANT
             return Response({"error": str(e)}, status=500)
 
-# class ResumeHistoryView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request):
-#         try:
-#             # 🔐 Check user
-#             user = request.user
-#             print("CURRENT USER:", user)
-
-#             # 📊 Get data
-#             if user.is_superuser:
-#                 resumes = Resume.objects.all().select_related('user', 'department', 'subdepartment')
-#             else:
-#                 resumes = Resume.objects.filter(user=user).select_related('user', 'department', 'subdepartment')
-
-#             data = []
-
-#             for r in resumes:
-#                 try:
-#                     data.append({
-#                         "id": r.id,
-#                         "filename": (r.file.name.split("/")[-1] if r.file else r.name),
-#                         "uploaded_at": r.uploaded_at,
-#                         "user": (r.user.username if r.user else "Unknown"),
-#                         "department": getattr(r.department, "name", "N/A"),
-#                         "subdepartment": getattr(r.subdepartment, "name", None),
-#                     })
-#                 except Exception as e:
-#                     print(f"❌ Error in resume {r.id}: {e}")  # debug per row
-
-#             return Response(data)
-
-#         except Exception as e:
-#             print("❌ GLOBAL ERROR:", str(e))
-#             return Response({"error": str(e)}, status=500)    
-    
-    
-# class ResumeHistoryView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request):
-#         if request.user.is_superuser:
-#             resumes = Resume.objects.all()
-#         else:
-#             resumes = Resume.objects.filter(user=request.user)
-
-#         data = []
-#         for r in resumes:
-#             data.append({
-#                 "id": r.id,
-#                 "filename": r.file.name.split("/")[-1] if r.file else r.name,
-#                 "uploaded_at": r.uploaded_at,
-#                 "user": r.user.username if r.user else "Unknown",
-#                 "department": r.department.name,
-#                 "subdepartment": r.subdepartment.name if r.subdepartment else None,
-#             })
-
-#         return Response(data)
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response

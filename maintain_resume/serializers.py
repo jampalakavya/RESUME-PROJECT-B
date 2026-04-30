@@ -10,42 +10,12 @@ class SubDepartmentSerializer(serializers.ModelSerializer):
         model = SubDepartment
         fields = ['id', 'name', 'department']
 
-# class ResumeSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Resume
-#         fields = ['id', 'name', 'email', 'skills', 'department', 'subdepartment', 'file', 'uploaded_at','experience','is_bookmarked']
-
-#     def validate(self, data):
-#         department = data.get('department')
-#         subdepartment = data.get('subdepartment')
-#         #  Required check 
-#         if not department or not subdepartment:
-#             raise serializers.ValidationError(
-#                 "Department and SubDepartment are required"
-#             )
-#         #  Relationship check
-#         if subdepartment.department != department:
-#             raise serializers.ValidationError(
-#                 "SubDepartment does not belong to selected Department"
-#             )
-#         return data
-#     def validate_file(self, value):
-#     # Safety check
-#         if not hasattr(value, 'name'):
-#             raise serializers.ValidationError("Invalid file")
-
-#         allowed_ext = ('.pdf', '.doc', '.docx')
-
-#         if not value.name.lower().endswith(allowed_ext):
-#             raise serializers.ValidationError("Only PDF, DOC, and DOCX files are allowed")
-
-#         return value
 from rest_framework import serializers
 from .models import Resume
 
 
 class ResumeSerializer(serializers.ModelSerializer):
-    file_url = serializers.SerializerMethodField()   # ✅ ADD THIS
+    file_url = serializers.SerializerMethodField()   #  ADD THIS
 
     class Meta:
         model = Resume
@@ -57,13 +27,13 @@ class ResumeSerializer(serializers.ModelSerializer):
             'department',
             'subdepartment',
             'file',        # keep for internal use
-            'file_url',    # ✅ IMPORTANT (for frontend)
+            'file_url',    #  IMPORTANT (for frontend)
             'uploaded_at',
             'experience',
             'is_bookmarked'
         ]
 
-    # ✅ THIS FIXES YOUR VIEW/DOWNLOAD ISSUE
+    #  THIS FIXES YOUR VIEW/DOWNLOAD ISSUE
     def get_file_url(self, obj):
         if obj.file:
             return obj.file.url   # Cloudinary full URL
