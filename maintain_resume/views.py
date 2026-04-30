@@ -41,7 +41,7 @@ class ProfileView(APIView):
         serializer = UserProfileSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({"msg": "Profile updated", "data": serializer.data})
+            return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
 
@@ -236,7 +236,6 @@ User = get_user_model()
 
 
 class VerifyOTPView(APIView):
-    # permission_classes = [AllowAny]
 
     def post(self, request):
         email = request.data.get("email")
@@ -338,7 +337,6 @@ class ForgotPasswordView(APIView):
 
 
 class ResetPasswordView(APIView):
-    # permission_classes = [AllowAny]
 
     def post(self, request):
         email = request.data.get("email")
@@ -548,7 +546,7 @@ class ResumeListView(APIView):
         if subdepartment and subdepartment != "":
             resumes = resumes.filter(subdepartment_id=subdepartment)
 
-        # 🔍 Search
+        #  Search
         if search:
             resumes = resumes.filter(
                 Q(name__icontains=search) |
@@ -575,7 +573,7 @@ class DeleteResumeView(APIView):
         try:
             # DELETE FROM CLOUDINARY
             if resume.file:
-                public_id = resume.file.public_id   # VERY IMPORTANT
+                public_id = resume.file.public_id   
                 cloudinary.uploader.destroy(public_id, resource_type="raw")
 
             #  DELETE FROM DATABASE
@@ -601,24 +599,24 @@ class DownloadResumeView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, pk):
-        # 🔍 Get resume
+        #  Get resume
         resume = get_object_or_404(Resume, id=pk)
 
-        # ❌ If no file
+        #  If no file
         if not resume.file:
             return HttpResponse("File not found", status=404)
 
         try:
-            # 🌐 Get Cloudinary URL
+            #  Get Cloudinary URL
             file_url = resume.file.url
 
-            # 🔥 Fetch file from Cloudinary
+            #  Fetch file from Cloudinary
             response = requests.get(file_url)
 
             if response.status_code != 200:
                 return HttpResponse("Failed to fetch file", status=500)
 
-            # 📧 SEND EMAIL (ADDED - without breaking your flow)
+            # SEND EMAIL (ADDED - without breaking your flow)
             try:
                 user_name = (
                     request.user.username
@@ -647,7 +645,7 @@ class DownloadResumeView(APIView):
             except Exception as email_error:
                 print("Email error:", email_error)
 
-            # 🔥 FORCE DOWNLOAD (your original logic)
+            #  FORCE DOWNLOAD (your original logic)
             file_response = HttpResponse(
                 response.content,
                 content_type="application/pdf"
@@ -724,7 +722,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-
 class ResumeHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -762,7 +759,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Resume
-
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])

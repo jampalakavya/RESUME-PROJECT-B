@@ -15,7 +15,7 @@ from .models import Resume
 
 
 class ResumeSerializer(serializers.ModelSerializer):
-    file_url = serializers.SerializerMethodField()   #  ADD THIS
+    file_url = serializers.SerializerMethodField()   
 
     class Meta:
         model = Resume
@@ -26,8 +26,8 @@ class ResumeSerializer(serializers.ModelSerializer):
             'skills',
             'department',
             'subdepartment',
-            'file',        # keep for internal use
-            'file_url',    #  IMPORTANT (for frontend)
+            'file',        
+            'file_url',    
             'uploaded_at',
             'experience',
             'is_bookmarked'
@@ -36,10 +36,10 @@ class ResumeSerializer(serializers.ModelSerializer):
     #  THIS FIXES YOUR VIEW/DOWNLOAD ISSUE
     def get_file_url(self, obj):
         if obj.file:
-            return obj.file.url   # Cloudinary full URL
+            return obj.file.url   
         return None
 
-    # ---------------- VALIDATIONS ---------------- #
+    # VALIDATIONS 
 
     def validate(self, data):
         department = data.get('department')
@@ -77,14 +77,14 @@ class ResumeSerializer(serializers.ModelSerializer):
 
         return value
 
-# serializers.py
+
 from rest_framework import serializers
 from .models import (
     UserResume, Education, Experience, Project,
     Skill, Certification, Achievement, Language
 )
 
-# -------- CHILD --------
+# CHILD
 
 class EducationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -128,7 +128,7 @@ class LanguageSerializer(serializers.ModelSerializer):
         fields = ['name']
 
 
-# -------- MAIN --------
+# MAIN 
 
 class UserResumeSerializer(serializers.ModelSerializer):
     educations = EducationSerializer(many=True)
@@ -184,7 +184,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 
 
-# ---------------- AUTH SERIALIZERS ----------------
+# AUTH SERIALIZERS
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)

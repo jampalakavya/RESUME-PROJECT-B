@@ -27,11 +27,8 @@ class Resume(models.Model):
     )
     email = models.EmailField(unique=True, null=True, blank=True)
     skills = models.TextField()
-
     name = models.CharField(max_length=200)
-    # file = models.FileField(upload_to='resumes/')
     file = CloudinaryField(resource_type='raw', folder='resumes')
-    # file = models.URLField()
     public_id = models.CharField(max_length=255, blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     experience = models.IntegerField(default=0)
@@ -59,7 +56,7 @@ class ResumeTemplate(models.Model):
     
     
     
-# models.py
+
 from django.db import models
 from django.contrib.auth import get_user_model
 
@@ -88,7 +85,6 @@ class UserResume(models.Model):
     template_name = models.CharField(max_length=100)
 
     file = models.FileField(upload_to='generated_resumes/', null=True, blank=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
 
