@@ -14,7 +14,6 @@ import mimetypes
 from django.shortcuts import render
 import re
 from .utils import send_email
-
 from django.utils import timezone
 from datetime import timedelta
 import random
@@ -30,24 +29,10 @@ from .serializers import UserResumeSerializer
 from .models import UserResume
 from .utils import generate_pdf
 from .permissions import IsAdminUserCustom
-# class ProfileView(APIView):
-#     permission_classes = [IsAuthenticated]
-#     def get(self, request):
-#         user = request.user
-#         serializer = UserProfileSerializer(user)
-#         return Response(serializer.data)
-#     def put(self, request):
-#         user = request.user
-#         serializer = UserProfileSerializer(user, data=request.data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=400)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserProfileSerializer
-
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -73,7 +58,6 @@ class RegisterView(APIView):
             #  Send Email (non-blocking)
             email_sent = send_email(
                 subject="Welcome to Resume Management System",
-                # message=f"<h3>Hello {user.username}, welcome! </h3>",
                 message = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -526,7 +510,7 @@ class UploadResumeView(APIView):
             return Response({"error": "No file provided"}, status=400)
 
         data = request.data.copy()
-        data["file"] = file   #  VERY IMPORTANT
+        data["file"] = file   
 
         serializer = ResumeSerializer(data=data)
 
@@ -536,7 +520,7 @@ class UploadResumeView(APIView):
 
             return Response({
                 "message": "Uploaded",
-                "file_url": resume.file.url   #  Cloudinary URL
+                "file_url": resume.file.url   
             }, status=201)
 
         print("ERRORS:", serializer.errors)
@@ -769,7 +753,7 @@ class ResumeHistoryView(APIView):
             return Response(data)
 
         except Exception as e:
-            print(" ERROR:", str(e))   # VERY IMPORTANT
+            print(" ERROR:", str(e))
             return Response({"error": str(e)}, status=500)
 
 from rest_framework.decorators import api_view, permission_classes

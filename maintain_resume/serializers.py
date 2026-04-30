@@ -207,11 +207,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data['password'] = make_password(validated_data['password'])
         return User.objects.create(**validated_data)
 
-
-# class UserProfileSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = ['id', 'username', 'email']
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
