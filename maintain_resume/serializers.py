@@ -208,7 +208,18 @@ class RegisterSerializer(serializers.ModelSerializer):
         return User.objects.create(**validated_data)
 
 
+# class UserProfileSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ['id', 'username', 'email']
+from rest_framework import serializers
+from django.contrib.auth.models import User
+
 class UserProfileSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(
+        format="%d %b %Y", read_only=True
+    )
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email']
+        fields = ['id', 'username', 'email', 'date_joined']

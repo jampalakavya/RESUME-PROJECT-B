@@ -30,20 +30,38 @@ from .serializers import UserResumeSerializer
 from .models import UserResume
 from .utils import generate_pdf
 from .permissions import IsAdminUserCustom
+# class ProfileView(APIView):
+#     permission_classes = [IsAuthenticated]
+#     def get(self, request):
+#         user = request.user
+#         serializer = UserProfileSerializer(user)
+#         return Response(serializer.data)
+#     def put(self, request):
+#         user = request.user
+#         serializer = UserProfileSerializer(user, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=400)
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .serializers import UserProfileSerializer
+
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
         user = request.user
         serializer = UserProfileSerializer(user)
         return Response(serializer.data)
-    def put(self, request):
-        user = request.user
-        serializer = UserProfileSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=400)
 
+    #block update completely
+    def put(self, request):
+        return Response(
+            {"error": "Profile editing not allowed"},
+            status=403
+        )
 
 class RegisterView(APIView):
     permission_classes=[AllowAny]
