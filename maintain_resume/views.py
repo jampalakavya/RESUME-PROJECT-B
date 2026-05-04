@@ -412,11 +412,11 @@ class DashboardAPIView(APIView):
 
         # SAP & WEB counts
         sap_count = Resume.objects.filter(
-            department__name__iexact="sap"
+            department__name__icontains="sap"
         ).count()
 
         web_count = Resume.objects.filter(
-            department__name__iexact="web"
+            department__name__icontains="web"
         ).count()
 
         # Latest 5 resumes
