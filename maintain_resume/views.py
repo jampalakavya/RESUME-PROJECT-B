@@ -785,7 +785,14 @@ from rest_framework import status
 from .models import Department, SubDepartment
 from .serializers import DepartmentSerializer, SubDepartmentSerializer
 class DepartmentUpdateView(APIView):
+
     def put(self, request, pk):
+        return self.update(request, pk)
+
+    def patch(self, request, pk):   # ✅ ADD THIS
+        return self.update(request, pk)
+
+    def update(self, request, pk):
         try:
             dept = Department.objects.get(pk=pk)
         except Department.DoesNotExist:
@@ -797,9 +804,16 @@ class DepartmentUpdateView(APIView):
             serializer.save()
             return Response(serializer.data)
 
-        return Response(serializer.errors, status=400)    
+        return Response(serializer.errors, status=400)
 class SubDepartmentUpdateView(APIView):
+
     def put(self, request, pk):
+        return self.update(request, pk)
+
+    def patch(self, request, pk):   # ✅ ADD THIS
+        return self.update(request, pk)
+
+    def update(self, request, pk):
         try:
             sub = SubDepartment.objects.get(pk=pk)
         except SubDepartment.DoesNotExist:
@@ -811,4 +825,4 @@ class SubDepartmentUpdateView(APIView):
             serializer.save()
             return Response(serializer.data)
 
-        return Response(serializer.errors, status=400)    
+        return Response(serializer.errors, status=400)
