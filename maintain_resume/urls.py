@@ -30,4 +30,7 @@ urlpatterns = [
     # urls.py
     path("user-resume/create/", CreateResume.as_view()),
     path("user-resume/list/", MyResumes.as_view()),
+    # UPDATE APIs
+    path('departments/<int:pk>/', DepartmentUpdateView.as_view()),
+    path('subdepartments/<int:pk>/', SubDepartmentUpdateView.as_view()),
 ]

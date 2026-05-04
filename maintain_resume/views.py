@@ -778,3 +778,37 @@ def toggle_bookmark(request, pk):
 
     except Resume.DoesNotExist:
         return Response({"error": "Resume not found"}, status=404)
+    
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Department, SubDepartment
+from .serializers import DepartmentSerializer, SubDepartmentSerializer
+class DepartmentUpdateView(APIView):
+    def put(self, request, pk):
+        try:
+            dept = Department.objects.get(pk=pk)
+        except Department.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+
+        serializer = DepartmentSerializer(dept, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=400)    
+class SubDepartmentUpdateView(APIView):
+    def put(self, request, pk):
+        try:
+            sub = SubDepartment.objects.get(pk=pk)
+        except SubDepartment.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+
+        serializer = SubDepartmentSerializer(sub, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=400)    
