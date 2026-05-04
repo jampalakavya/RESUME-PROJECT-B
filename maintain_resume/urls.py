@@ -13,11 +13,15 @@ urlpatterns = [
     path("resumes/history/", ResumeHistoryView.as_view()),
     path("resumes/<int:pk>/bookmark/", toggle_bookmark),
     #  Department
+    path('departments/<int:pk>/', DepartmentUpdateView.as_view()),
     path('departments/', DepartmentView.as_view()),     # GET (list), POST (create)
     path('departments/delete/<int:pk>/', DepartmentDeleteView.as_view()),
+   
     #  SubDepartment
+    path('subdepartments/<int:pk>/', SubDepartmentUpdateView.as_view()),
     path('subdepartments/', SubDepartmentView.as_view()), # GET (list), POST (create)
     path('subdepartments/delete/<int:pk>/', SubDepartmentDeleteView.as_view()),
+    
     #  Resume
     path('resumes/upload/', UploadResumeView.as_view()), # POST
     path('resumes/', ResumeListView.as_view()),          # GET
@@ -30,7 +34,5 @@ urlpatterns = [
     # urls.py
     path("user-resume/create/", CreateResume.as_view()),
     path("user-resume/list/", MyResumes.as_view()),
-    # UPDATE APIs
-    path('departments/<int:pk>/', DepartmentUpdateView.as_view()),
-    path('subdepartments/<int:pk>/', SubDepartmentUpdateView.as_view()),
+   
 ]
